@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.17.0 (a74acad)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: keycloak
+  name: keycloak
+  namespace: development
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: keycloak
+    spec:
+      containers:
+      - args:
+        - -b
+        - 0.0.0.0
+        - -Dkeycloak.migration.action=import
+        - -Dkeycloak.migration.provider=dir
+        - -Dkeycloak.migration.dir=/opt/jboss/keycloak/realm-config
+        - -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+        - -Djboss.socket.binding.port-offset=1000
+        env:
+        - name: DB_VENDOR
+          value: h2
+        - name: KEYCLOAK_PASSWORD
+          value: admin
+        - name: KEYCLOAK_USER
+          value: admin
+        image: jboss/keycloak:4.5.0.Final
+        name: keycloak
+        ports:
+        - containerPort: 9080
+        - containerPort: 9443
+        - containerPort: 10990
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/jboss/keycloak/realm-config
+          name: keycloak-claim0
+      restartPolicy: Always
+      volumes:
+      - name: keycloak-claim0
+        persistentVolumeClaim:
+          claimName: keycloak-claim0
+status: {}
